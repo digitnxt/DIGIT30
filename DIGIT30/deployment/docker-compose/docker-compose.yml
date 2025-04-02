@@ -67,8 +67,8 @@ services:
 
   kong:
     build:
-      context: ../../services/backbone/kong-synch
-      dockerfile: Dockerfile.kong
+      context: ../../services/backbone/kong
+      dockerfile: Dockerfile
     environment:
       - KONG_DATABASE=postgres
       - KONG_PG_HOST=kong-db
@@ -111,6 +111,18 @@ services:
         condition: service_healthy
       consul:
         condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      jaeger:
+        condition: service_started
+      prometheus:
+        condition: service_started
+      grafana:
+        condition: service_started
     networks:
       - app-network
   
@@ -136,6 +148,33 @@ services:
     networks:
       - app-network
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "16686:16686"  # UI
+      - "6831:6831/udp"  # Agent (UDP)
+      - "14268:14268"  # Collector
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
 
 networks:
   app-network:
@@ -149,4 +188,8 @@ volumes:
   kafka-data:
     driver: local
   redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
     driver: local

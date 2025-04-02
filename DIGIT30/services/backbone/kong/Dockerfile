@@ -1,6 +1,6 @@
 FROM kong:latest
 USER root
-RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl postgresql-client && rm -rf /var/lib/apt/lists/*
 COPY kong-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/kong-entrypoint.sh
 USER kong
