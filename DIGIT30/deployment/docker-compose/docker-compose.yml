@@ -126,6 +126,16 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
 
 networks:
   app-network:
@@ -137,4 +147,6 @@ volumes:
   kong-db-data:
     driver: local
   kafka-data:
+    driver: local
+  redis-data:
     driver: local
