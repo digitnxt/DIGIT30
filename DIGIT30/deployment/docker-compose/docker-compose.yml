@@ -1,0 +1,115 @@
+version: "3.8"
+
+services:
+  digit-postgres:
+    image: postgres:13-alpine
+    container_name: digit-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: digit-admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/digit_admin_password
+      POSTGRES_DB: digit_services
+    secrets:
+      - digit_admin_password
+    volumes:
+      - digit-postgres_data:/var/lib/postgresql/data
+    networks:
+      - digit-network
+    ports:
+      - "5432:5432"
+
+  digit-keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: digit-keycloak
+    restart: always
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: digit-postgres
+      DB_DATABASE: digit_services
+      DB_USER: digit-admin
+      DB_PASSWORD_FILE: /run/secrets/digit_admin_password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD_FILE: /run/secrets/keycloak_admin_password
+    secrets:
+      - digit_admin_password
+      - keycloak_admin_password
+    depends_on:
+      - digit-postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - digit-keycloak_data:/opt/jboss/keycloak/standalone/data
+    networks:
+      - digit-network
+    command: >
+      /bin/sh -c "sleep 10 && /opt/jboss/keycloak/bin/standalone.sh -Dkeycloak.profile.feature.upload_scripts=enabled"
+
+  digit-consul:
+    image: consul:latest
+    container_name: digit-consul
+    restart: always
+    command: agent -server -bootstrap-expect=1 -client=0.0.0.0
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    volumes:
+      - digit-consul_data:/consul/data
+    networks:
+      - digit-network
+
+  digit-kong:
+    image: kong:latest
+    container_name: digit-kong
+    restart: always
+    environment:
+      KONG_DATABASE: "postgres"   # Use postgres as the database
+      KONG_PG_HOST: digit-postgres
+      KONG_PG_USER: digit-admin
+      KONG_PG_PASSWORD_FILE: /run/secrets/digit_admin_password
+      KONG_PG_DATABASE: digit_services
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+    depends_on:
+      - digit-postgres
+      - digit-consul
+    ports:
+      - "8000:8000"   # Kong proxy
+      - "8443:8443"   # Kong proxy (SSL)
+      - "8001:8001"   # Kong Admin API
+      - "8444:8444"   # Kong Admin API (SSL)
+    volumes:
+      - digit-kong_data:/usr/local/kong
+    networks:
+      - digit-network
+
+  digit-kong-synch:
+    build:
+      context: ./services/kong-synch
+      dockerfile: Dockerfile
+    command: "node synch.js"
+    depends_on:
+      digit-kong:
+        condition: service_healthy
+      digit-consul:
+        condition: service_started
+    networks:
+      - digit-network
+
+secrets:
+  digit_admin_password:
+    file: ./secrets/digit_admin_password.txt
+  keycloak_admin_password:
+    file: ./secrets/keycloak_admin_password.txt
+
+volumes:
+  digit-postgres_data:
+  digit-keycloak_data:
+  digit-consul_data:
+  digit-kong_data:
+
+networks:
+  digit-network:
+    driver: bridge
