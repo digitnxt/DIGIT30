@@ -1,14 +1,14 @@
 package model
 
 import (
-	"time"
-
+	"github.com/google/uuid"
 	"gorm.io/datatypes"
+	"time"
 )
 
 // Account represents the structure for the accounts table.
 type Account struct {
-	ID          int            `gorm:"primaryKey" json:"id"`
+	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primaryKey" json:"id"`
 	AccountName string         `gorm:"column:accountname;unique;not null" json:"accountname"`
 	AdminEmail  string         `json:"admin_email"`
 	AdminPhone  string         `json:"admin_phone"`

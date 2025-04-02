@@ -6,6 +6,7 @@ import (
 
 	"account/config"
 	"account/model"
+	"github.com/google/uuid"
 
 	"github.com/labstack/echo/v4"
 )
@@ -47,7 +48,7 @@ func CreateAccount(c echo.Context) error {
 // GetAccount retrieves a single account by its ID.
 func GetAccount(c echo.Context) error {
 	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
+	uid, err := uuid.Parse(idStr)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"message": "Invalid account ID",
@@ -56,7 +57,7 @@ func GetAccount(c echo.Context) error {
 
 	db := config.DB()
 	var account model.Account
-	if err := db.First(&account, id).Error; err != nil {
+	if err := db.First(&account, "id = ?", uid).Error; err != nil {
 		return c.JSON(http.StatusNotFound, map[string]interface{}{
 			"message": "Account not found",
 		})
