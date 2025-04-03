@@ -1,0 +1,52 @@
+{
+    "id": null,
+    "uid": "redis-dashboard",
+    "title": "Redis Metrics",
+    "timezone": "browser",
+    "panels": [
+      {
+        "type": "timeseries",
+        "title": "Connected Clients",
+        "targets": [
+          {
+            "expr": "redis_connected_clients",
+            "legendFormat": "clients",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "type": "timeseries",
+        "title": "Memory Usage (bytes)",
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes",
+            "legendFormat": "used memory",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+      },
+      {
+        "type": "timeseries",
+        "title": "Cache Hits vs Misses",
+        "targets": [
+          {
+            "expr": "rate(redis_keyspace_hits_total[1m])",
+            "legendFormat": "hits",
+            "refId": "C"
+          },
+          {
+            "expr": "rate(redis_keyspace_misses_total[1m])",
+            "legendFormat": "misses",
+            "refId": "D"
+          }
+        ],
+        "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8}
+      }
+    ],
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "10s"
+  }

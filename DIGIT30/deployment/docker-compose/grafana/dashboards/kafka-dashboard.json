@@ -1,0 +1,47 @@
+{
+    "id": null,
+    "uid": "kafka-dashboard",
+    "title": "Kafka Exporter Metrics",
+    "timezone": "browser",
+    "panels": [
+      {
+        "type": "timeseries",
+        "title": "Kafka Consumer Group Lag",
+        "targets": [
+          {
+            "expr": "kafka_consumergroup_lag",
+            "legendFormat": "{{consumergroup}} | {{topic}} | {{partition}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 }
+      },
+      {
+        "type": "timeseries",
+        "title": "Messages In Per Topic",
+        "targets": [
+          {
+            "expr": "rate(kafka_topic_partition_current_offset[1m])",
+            "legendFormat": "{{topic}}",
+            "refId": "B"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 }
+      },
+      {
+        "type": "timeseries",
+        "title": "Partition Count Per Topic",
+        "targets": [
+          {
+            "expr": "count(kafka_topic_partition_leader{partition=\"0\"}) by (topic)",
+            "legendFormat": "{{topic}}",
+            "refId": "C"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 }
+      }
+    ],
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "10s"
+  }

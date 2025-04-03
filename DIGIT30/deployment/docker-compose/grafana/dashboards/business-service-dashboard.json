@@ -1,0 +1,172 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+      {
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "show": true
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(business_service_metric_total[5m])) by (account)",
+            "format": "time_series",
+            "interval": "",
+            "intervalFactor": 2,
+            "legendFormat": "{{account}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Business Metrics by Account",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "legend": {
+            "show": true
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(business_service_metric_total[5m])) by (what)",
+            "format": "time_series",
+            "interval": "",
+            "intervalFactor": 2,
+            "legendFormat": "{{what}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Business Metrics by What",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 3,
+        "options": {
+          "showHeader": true
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(business_service_metric_total[5m])) by (who, what, why, when, how, where, whom, account, howmuch)",
+            "format": "table",
+            "interval": "",
+            "intervalFactor": 2,
+            "refId": "A"
+          }
+        ],
+        "title": "Detailed Business Metrics",
+        "type": "table"
+      }
+    ],
+    "schemaVersion": 30,
+    "style": "dark",
+    "tags": [
+      "business",
+      "metrics",
+      "api"
+    ],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": false,
+            "text": "All",
+            "value": ""
+          },
+          "datasource": "Prometheus",
+          "definition": "label_values(business_service_metric_total, account)",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Account",
+          "multi": false,
+          "name": "account",
+          "query": {
+            "query": "label_values(business_service_metric_total, account)",
+            "refresh": 1
+          },
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "All",
+            "value": ""
+          },
+          "datasource": "Prometheus",
+          "definition": "label_values(business_service_metric_total, what)",
+          "hide": 0,
+          "includeAll": true,
+          "label": "What",
+          "multi": false,
+          "name": "what",
+          "query": {
+            "query": "label_values(business_service_metric_total, what)",
+            "refresh": 1
+          },
+          "sort": 0,
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Business Service Metrics Dashboard",
+    "uid": "business-service-metrics-dashboard",
+    "version": 1
+  }

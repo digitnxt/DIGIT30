@@ -1,0 +1,30 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server for exposing OpenAPI with Gin and Swaggo",
+        "title": "Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/ping": {
+            "get": {
+                "description": "Returns a pong message",
+                "tags": [
+                    "health"
+                ],
+                "summary": "Ping the server",
+                "responses": {
+                    "200": {
+                        "description": "pong",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,195 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "panels": [
+      {
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "show": true
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(api_usage_total[5m])) by (account)",
+            "format": "time_series",
+            "instant": false,
+            "interval": "",
+            "intervalFactor": 2,
+            "legendFormat": "{{account}}",
+            "refId": "A"
+          }
+        ],
+        "title": "API Usage by Account",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "legend": {
+            "show": true
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(api_usage_total[5m])) by (service)",
+            "format": "time_series",
+            "instant": false,
+            "interval": "",
+            "intervalFactor": 2,
+            "legendFormat": "{{service}}",
+            "refId": "A"
+          }
+        ],
+        "title": "API Usage by Service",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "Prometheus",
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
+        "id": 3,
+        "options": {
+          "showHeader": true
+        },
+        "targets": [
+          {
+            "expr": "sum(rate(api_usage_total[5m])) by (api, account, service, cost)",
+            "format": "table",
+            "instant": false,
+            "interval": "",
+            "intervalFactor": 2,
+            "refId": "A"
+          }
+        ],
+        "title": "Itemized API Usage",
+        "type": "table"
+      }
+    ],
+    "schemaVersion": 30,
+    "style": "dark",
+    "tags": [
+      "kong",
+      "api",
+      "usage"
+    ],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "selected": false,
+            "text": "All",
+            "value": ""
+          },
+          "datasource": "Prometheus",
+          "definition": "label_values(api_usage_total, account)",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Account",
+          "multi": false,
+          "name": "account",
+          "query": {
+            "query": "label_values(api_usage_total, account)",
+            "refresh": 1
+          },
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "All",
+            "value": ""
+          },
+          "datasource": "Prometheus",
+          "definition": "label_values(api_usage_total, service)",
+          "hide": 0,
+          "includeAll": true,
+          "label": "Service",
+          "multi": false,
+          "name": "service",
+          "query": {
+            "query": "label_values(api_usage_total, service)",
+            "refresh": 1
+          },
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "current": {
+            "selected": false,
+            "text": "All",
+            "value": ""
+          },
+          "datasource": "Prometheus",
+          "definition": "label_values(api_usage_total, api)",
+          "hide": 0,
+          "includeAll": true,
+          "label": "API",
+          "multi": false,
+          "name": "api",
+          "query": {
+            "query": "label_values(api_usage_total, api)",
+            "refresh": 1
+          },
+          "sort": 0,
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Kong API Usage Dashboard",
+    "uid": "kong-usage-dashboard",
+    "version": 1
+  }

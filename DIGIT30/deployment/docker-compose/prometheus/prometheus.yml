@@ -1,5 +1,3 @@
-# deployment/docker-compose/prometheus/prometheus.yml
-
 global:
   scrape_interval: 15s
 
@@ -7,3 +5,33 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+  - job_name: 'identity-metrics-static'
+    static_configs:
+      - targets: ['identity:9464']
+  - job_name: 'kong'
+    static_configs:
+      - targets: ['kong:8001']
+  - job_name: 'consul-services'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: []
+    scheme: http
+    relabel_configs:
+      - source_labels: [__meta_consul_service]
+        regex: "identity-metrics|prometheus|grafana"
+        action: keep
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+  - job_name: 'kafka-exporter'
+    static_configs:
+      - targets: ['kafka-exporter:9308']
+    # relabel_configs:
+    #   - source_labels: [__meta_consul_tags]
+    #     regex: .*metrics.*
+    #     action: keep
+    #   - source_labels: [__meta_consul_service]
+    #     target_label: job
+    #   - source_labels: [__meta_consul_address, __meta_consul_service_port]
+    #     separator: ":"
+    #     target_label: __address__

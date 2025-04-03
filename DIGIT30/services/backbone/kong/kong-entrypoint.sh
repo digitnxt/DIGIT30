@@ -67,3 +67,12 @@ echo "✅ All registration requests sent"
 # Start Kong with verbose output and explicit foreground
 echo "Starting Kong..."
 exec kong start --vv
+
+# Wait for Kong Admin API to be ready
+until curl -s http://localhost:8001/status > /dev/null; do
+  echo "Waiting for Kong Admin API..."
+  sleep 1
+done
+
+# Enable the api-costing plugin globally
+curl -X POST http://localhost:8001/plugins --data "name=api-costing"

@@ -22,6 +22,7 @@ services:
     ports:
       - "8500:8500"  # Standard port: 8500
     command: "agent -server -bootstrap -ui -client=0.0.0.0"
+    
     networks:
       - app-network
 
@@ -46,6 +47,16 @@ services:
       - app-network
     volumes:
       - kafka-data:/bitnami/kafka
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    ports:
+      - "9308:9308"
+    environment:
+      - KAFKA_SERVER=kafka:9092
+    networks:
+      - app-network
+    depends_on:
+      - kafka
 
   kong-db:
     image: postgres:13
@@ -85,14 +96,12 @@ services:
       - KONG_CONSUL_HOST=consul
       - KONG_CONSUL_PORT=8500
       - KONG_NGINX_DAEMON=off 
+      - KONG_PLUGINS=bundled,api-costing
     ports:
       - "8000:8000"
       - "8001:8001"
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8001/status"]
-    #   interval: 5s
-    #   timeout: 5s
-    #   retries: 10
+    volumes:
+      - ../../services/backbone/kong/plugins/api-costing:/usr/local/share/lua/5.1/kong/plugins/api-costing
     depends_on:
       kong-db:
         condition: service_healthy
@@ -148,8 +157,19 @@ services:
     networks:
       - app-network
 
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis:6379
+    networks:
+      - app-network
+    depends_on:
+      - redis
+
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    image: jaegertracing/all-in-one:latest  
     container_name: jaeger
     ports:
       - "16686:16686"  # UI
@@ -170,11 +190,29 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
     ports:
       - "3000:3000"
+    depends_on:
+      - prometheus
     networks:
       - app-network
+    volumes:
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboard-provisioning.yml:/etc/grafana/provisioning/dashboards/dashboard-provisioning.yml
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+  identity:
+    build:
+      context: ../../services/common/identity
+      dockerfile: Dockerfile
+    container_name: identity
+    ports:
+      - "0:8080"
+      - "9464:9464"    # 🔥 expose metrics port
+    networks:
+      - app-network
+    depends_on:
+      consul:
+        condition: service_started
 
 networks:
   app-network:

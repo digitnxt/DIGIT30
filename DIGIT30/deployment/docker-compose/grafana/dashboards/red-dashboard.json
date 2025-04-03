@@ -1,0 +1,101 @@
+{
+    "id": null,
+    "uid": "red-dashboard",
+    "title": "RED Metrics Dashboard",
+    "timezone": "browser",
+    "panels": [
+      {
+        "type": "timeseries",
+        "title": "Request Rate (req/sec)",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[1m])",
+            "legendFormat": "{{path}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+        "alert": {
+          "alertRuleTags": {},
+          "conditions": [
+            {
+              "evaluator": { "params": [1], "type": "lt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["A", "5m", "now"] },
+              "reducer": { "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "5m",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "Low Request Rate",
+          "noDataState": "no_data"
+        }
+      },
+      {
+        "type": "timeseries",
+        "title": "Error Rate (errors/sec)",
+        "targets": [
+          {
+            "expr": "rate(http_errors_total[1m])",
+            "legendFormat": "{{path}}",
+            "refId": "B"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+        "alert": {
+          "alertRuleTags": {},
+          "conditions": [
+            {
+              "evaluator": { "params": [1], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["B", "5m", "now"] },
+              "reducer": { "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "5m",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "High Error Rate",
+          "noDataState": "no_data"
+        }
+      },
+      {
+        "type": "timeseries",
+        "title": "Request Duration (95th percentile)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le, path))",
+            "legendFormat": "{{path}}",
+            "refId": "C"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
+        "alert": {
+          "alertRuleTags": {},
+          "conditions": [
+            {
+              "evaluator": { "params": [1], "type": "gt" },
+              "operator": { "type": "and" },
+              "query": { "params": ["C", "5m", "now"] },
+              "reducer": { "type": "avg" },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "5m",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "High Latency (p95)",
+          "noDataState": "no_data"
+        }
+      }
+    ],
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "10s"
+  }
