@@ -1,3 +1,10 @@
+// Package main provides the identity service implementation
+// @title Identity Service API
+// @version 1.0
+// @description This service handles identity and authentication related operations
+// @host localhost:8000
+// @BasePath /identity
+
 package main
 
 import (
@@ -7,11 +14,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	
-    "identity/internal/discovery"
-    "identity/internal/observability"
-	// "identity/internal/documentation"
 
+	_ "identity/docs" // This is important! It imports the generated docs
+	"identity/internal/discovery"
+	"identity/internal/docs"
+	"identity/internal/observability"
 )
 
 func main() {
@@ -32,7 +39,7 @@ func main() {
 	r.Use(observability.TracingMiddleware())
 
 	// Setup Documentation endpoints (Swagger/OpenAPI).
-	// documentation.SetupDocumentation(r, "./docs/swagger.json")
+	docs.SetupDocumentation(r)
 
 	// Use InstrumentHandler from the unified library for your handlers.
 	r.GET("/ping", observability.InstrumentHandler(PingHandler))
@@ -48,6 +55,13 @@ func main() {
 }
 
 // PingHandler is a sample endpoint that records a business metric.
+// @Summary Health check endpoint
+// @Description Returns a simple pong response to verify the service is running
+// @Tags health
+// @Accept json
+// @Produce plain
+// @Success 200 {string} string "pong"
+// @Router /ping [get]
 func PingHandler(c *gin.Context) {
 	_, span := observability.StartSpan(c.Request.Context(), "PingHandler")
 	defer span.End()

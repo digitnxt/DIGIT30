@@ -1,20 +1,24 @@
-basePath: /
-host: localhost:8080
+basePath: /identity
+host: localhost:8000
 info:
   contact: {}
-  description: This is a sample server for exposing OpenAPI with Gin and Swaggo
-  title: Example API
+  description: This service handles identity and authentication related operations
+  title: Identity Service API
   version: "1.0"
 paths:
   /ping:
     get:
-      description: Returns a pong message
+      consumes:
+      - application/json
+      description: Returns a simple pong response to verify the service is running
+      produces:
+      - text/plain
       responses:
         "200":
           description: pong
           schema:
             type: string
-      summary: Ping the server
+      summary: Health check endpoint
       tags:
       - health
 swagger: "2.0"

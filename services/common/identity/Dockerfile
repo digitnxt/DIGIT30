@@ -14,6 +14,9 @@ RUN go mod download
 # Copy the source code into the container
 COPY . .
 
+# Run go mod tidy to ensure dependencies are up to date
+RUN go mod tidy
+
 # Install swag CLI
 RUN go install github.com/swaggo/swag/cmd/swag@latest
 

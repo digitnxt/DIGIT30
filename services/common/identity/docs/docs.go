@@ -17,11 +17,17 @@ const docTemplate = `{
     "paths": {
         "/ping": {
             "get": {
-                "description": "Returns a pong message",
+                "description": "Returns a simple pong response to verify the service is running",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
                 "tags": [
                     "health"
                 ],
-                "summary": "Ping the server",
+                "summary": "Health check endpoint",
                 "responses": {
                     "200": {
                         "description": "pong",
@@ -38,11 +44,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/",
+	Host:             "localhost:8000",
+	BasePath:         "/identity",
 	Schemes:          []string{},
-	Title:            "Example API",
-	Description:      "This is a sample server for exposing OpenAPI with Gin and Swaggo",
+	Title:            "Identity Service API",
+	Description:      "This service handles identity and authentication related operations",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

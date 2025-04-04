@@ -1,21 +1,27 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server for exposing OpenAPI with Gin and Swaggo",
-        "title": "Example API",
+        "description": "This service handles identity and authentication related operations",
+        "title": "Identity Service API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
-    "basePath": "/",
+    "host": "localhost:8000",
+    "basePath": "/identity",
     "paths": {
         "/ping": {
             "get": {
-                "description": "Returns a pong message",
+                "description": "Returns a simple pong response to verify the service is running",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
                 "tags": [
                     "health"
                 ],
-                "summary": "Ping the server",
+                "summary": "Health check endpoint",
                 "responses": {
                     "200": {
                         "description": "pong",
