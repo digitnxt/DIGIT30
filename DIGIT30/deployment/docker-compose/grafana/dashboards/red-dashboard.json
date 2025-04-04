@@ -9,7 +9,7 @@
         "title": "Request Rate (req/sec)",
         "targets": [
           {
-            "expr": "rate(http_requests_total[1m])",
+            "expr": "rate(digit_http_requests_total[1m])",
             "legendFormat": "{{path}}",
             "refId": "A"
           }
@@ -39,7 +39,7 @@
         "title": "Error Rate (errors/sec)",
         "targets": [
           {
-            "expr": "rate(http_errors_total[1m])",
+            "expr": "rate(digit_http_errors_total[1m])",
             "legendFormat": "{{path}}",
             "refId": "B"
           }
@@ -69,7 +69,7 @@
         "title": "Request Duration (95th percentile)",
         "targets": [
           {
-            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le, path))",
+            "expr": "histogram_quantile(0.95, sum(rate(digit_http_request_duration_seconds_bucket[1m])) by (le, path))",
             "legendFormat": "{{path}}",
             "refId": "C"
           }
