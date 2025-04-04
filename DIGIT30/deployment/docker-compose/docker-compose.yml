@@ -214,6 +214,20 @@ services:
       consul:
         condition: service_started
 
+  # account:
+  #   build:
+  #     context: ../../services/account
+  #     dockerfile: Dockerfile
+  #   container_name: account
+  #   ports:
+  #     - "0:8080"
+  #     - "9464:9464"    # 🔥 expose metrics port
+  #   networks:
+  #     - app-network
+  #   depends_on:
+  #     consul:
+  #       condition: service_started
+
 networks:
   app-network:
     driver: bridge
