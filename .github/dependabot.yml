@@ -1,0 +1,68 @@
+version: 2
+updates:
+  # Enable version updates for Go modules
+  - package-ecosystem: "gomod"
+    # Look for Go modules in the root directory
+    directory: "/"
+    # Check for updates every week
+    schedule:
+      interval: "weekly"
+    # Specify update preferences
+    open-pull-requests-limit: 10
+    # Add labels to pull requests
+    labels:
+      - "dependencies"
+      - "security"
+    # Allow up to 10 open pull requests for dependencies
+    pull-request-branch-name:
+      # Separate sections of the branch name with a hyphen
+      separator: "-"
+    # Add reviewers
+    reviewers:
+      - "digitnxt/maintainers"
+    # Group all updates together
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+
+  # Enable version updates for Go modules in services/common/identity
+  - package-ecosystem: "gomod"
+    directory: "/services/common/identity"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "security"
+      - "identity-service"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+
+  # Enable version updates for Go modules in services/account
+  - package-ecosystem: "gomod"
+    directory: "/services/account"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "security"
+      - "account-service"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions:
+        patterns:
+          - "*" 
