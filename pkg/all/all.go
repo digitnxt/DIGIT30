@@ -2,9 +2,9 @@
 package all
 
 import (
-	"github.com/digitnxt/DIGIT30/pkg/observability"
-	"github.com/digitnxt/DIGIT30/pkg/discovery"
-	"github.com/digitnxt/DIGIT30/pkg/documentation"
+	"github.com/digitNxt/DIGIT30/pkg/observability"
+	"github.com/digitNxt/DIGIT30/pkg/discovery"
+	"github.com/digitNxt/DIGIT30/pkg/documentation"
 )
 
 // Observability functions.
