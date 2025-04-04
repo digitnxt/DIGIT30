@@ -7,10 +7,16 @@ import (
 	"account/internal/database"
 	"account/internal/handlers"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 )
 
 func main() {
+	// Load .env file from the project root
+	if err := godotenv.Load(); err != nil {
+		log.Printf("No .env file found or error loading it: %v", err)
+	}
+
 	// Replace with your actual PostgreSQL connection string.
 	connStr := "postgres://admin:password@localhost:5432/registry?sslmode=disable"
 	database.InitDB(connStr)
