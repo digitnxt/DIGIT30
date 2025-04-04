@@ -38,7 +38,7 @@
         },
         "targets": [
           {
-            "expr": "sum(rate(business_service_metric_total[5m])) by (account)",
+            "expr": "sum(rate(digit_business_service_metric_total[5m])) by (account)",
             "format": "time_series",
             "interval": "",
             "intervalFactor": 2,
@@ -69,7 +69,7 @@
         },
         "targets": [
           {
-            "expr": "sum(rate(business_service_metric_total[5m])) by (what)",
+            "expr": "sum(rate(digit_business_service_metric_total[5m])) by (what)",
             "format": "time_series",
             "interval": "",
             "intervalFactor": 2,
@@ -98,7 +98,7 @@
         },
         "targets": [
           {
-            "expr": "sum(rate(business_service_metric_total[5m])) by (who, what, why, when, how, where, whom, account, howmuch)",
+            "expr": "sum(rate(digit_business_service_metric_total[5m])) by (who, what, why, when, how, where, whom, account, howmuch)",
             "format": "table",
             "interval": "",
             "intervalFactor": 2,
@@ -125,14 +125,14 @@
             "value": ""
           },
           "datasource": "Prometheus",
-          "definition": "label_values(business_service_metric_total, account)",
+          "definition": "label_values(digit_business_service_metric_total, account)",
           "hide": 0,
           "includeAll": true,
           "label": "Account",
           "multi": false,
           "name": "account",
           "query": {
-            "query": "label_values(business_service_metric_total, account)",
+            "query": "label_values(digit_business_service_metric_total, account)",
             "refresh": 1
           },
           "sort": 0,
@@ -145,14 +145,14 @@
             "value": ""
           },
           "datasource": "Prometheus",
-          "definition": "label_values(business_service_metric_total, what)",
+          "definition": "label_values(digit_business_service_metric_total, what)",
           "hide": 0,
           "includeAll": true,
           "label": "What",
           "multi": false,
           "name": "what",
           "query": {
-            "query": "label_values(business_service_metric_total, what)",
+            "query": "label_values(digit_business_service_metric_total, what)",
             "refresh": 1
           },
           "sort": 0,

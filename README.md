@@ -82,18 +82,19 @@ To get started with DIGIT30:
 	1.	Clone the Repository:
 Clone the repository and navigate to the desired service directory.
 	2.	Build and Run Services:
-Use go build and go run for individual services during development. For a full-stack environment, run:
+For a full-stack environment, run:
 
-docker-compose up -d
+docker-compose up --build -d
+
+	Check Identity Service: Enter http://localhost:8000/identity/ping on browser. 
 
 
 	3.	Monitoring and Debugging:
 	•	Access Grafana at http://localhost:3000 to view system dashboards.
-	•	Use Prometheus at http://localhost:9090 for querying metrics.
-	•	Jaeger is available at http://localhost:16686 for distributed tracing.
-	4.	Service Discovery:
+	•	Use Prometheus at http://localhost:9090 for querying metrics. e.g. you can enter "digit_http_requests_total" and hit Execute. 
+	•	Jaeger is available at http://localhost:16686 for distributed tracing. Select "identity" and click on "Find Traces"
+	4.	Service Discovery: http://localhost:8500/
 Ensure that Consul (running on port 8500) is correctly registering services, allowing for dynamic discovery and routing.
-	5.	API Gateway Management:
+	5.	API Gateway Management: http://localhost:8001/services 
 The Kong API gateway (available on ports 8000 and 8001) manages all API requests and integrates custom plugins like api-costing for detailed metrics and costing.
-	6.	Contribution:
-Follow the contribution guidelines provided in the repository. Make sure to adhere to coding standards, write tests, and document your changes.
+	

@@ -22,7 +22,11 @@ services:
     ports:
       - "8500:8500"  # Standard port: 8500
     command: "agent -server -bootstrap -ui -client=0.0.0.0"
-    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
@@ -43,6 +47,11 @@ services:
       - KAFKA_CFG_LOG_DIRS=/bitnami/kafka/data
       - KAFKA_KRAFT_CLUSTER_ID=kraft-cluster-1
       - ALLOW_PLAINTEXT_LISTENER=yes
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     networks:
       - app-network
     volumes:
@@ -56,7 +65,8 @@ services:
     networks:
       - app-network
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
 
   kong-db:
     image: postgres:13
@@ -187,6 +197,11 @@ services:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   grafana:
     image: grafana/grafana:latest
@@ -212,7 +227,9 @@ services:
       - app-network
     depends_on:
       consul:
-        condition: service_started
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
 
   # account:
   #   build:

@@ -5,9 +5,6 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
-  - job_name: 'identity-metrics-static'
-    static_configs:
-      - targets: ['identity:9464']
   - job_name: 'kong'
     static_configs:
       - targets: ['kong:8001']
@@ -26,6 +23,9 @@ scrape_configs:
   - job_name: 'kafka-exporter'
     static_configs:
       - targets: ['kafka-exporter:9308']
+  - job_name: 'identity-metrics-static'
+    static_configs:
+      - targets: ['identity:9464']
     # relabel_configs:
     #   - source_labels: [__meta_consul_tags]
     #     regex: .*metrics.*
