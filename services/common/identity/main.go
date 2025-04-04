@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	
-	"github.com/digitNxt/DIGIT30/pkg/all"
+	"github.com/digitnxt/digit/pkg/all"
 )
 
 func main() {
