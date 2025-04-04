@@ -1,6 +1,6 @@
-# DIGIT30
+# DIGIT 3.0
 
-DIGIT30 is a microservices-based platform built with Go, Gin, and several modern tools to demonstrate a scalable, observable, and well-orchestrated distributed system. It leverages Docker Compose for deployment, enabling rapid development, testing, and production readiness.
+DIGIT 3.0 is a microservices-based platform built with Go, Gin, and several modern tools to demonstrate a scalable, observable, and well-orchestrated distributed system. It leverages Docker Compose for deployment, enabling rapid development, testing, and production readiness.
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
@@ -15,7 +15,7 @@ DIGIT30 is a microservices-based platform built with Go, Gin, and several modern
 
 ## Architecture Overview
 
-DIGIT30 follows a microservices architecture where individual components handle specific responsibilities. The system integrates service discovery, API gateway management, tracing, logging, and monitoring to ensure robust communication and observability across services.
+DIGIT 3.0 follows a microservices architecture where individual components handle specific responsibilities. The system integrates service discovery, API gateway management, tracing, logging, and monitoring to ensure robust communication and observability across services.
 
 ## Services Overview
 
@@ -67,19 +67,19 @@ The platform consists of multiple containerized services managed through Docker 
 
 ## APIs
 
-DIGIT30 exposes several APIs for internal and external use:
+DIGIT 3.0 exposes several APIs for internal and external use:
 
 ### Ping API (Health Check)
-- Located in `DIGIT30/services/common/identity/main.go`
+- Located in `services/common/identity/main.go`
 - Provides a simple endpoint to verify that the service is running
 
 ### Account API
-- Found in `DIGIT30/services/account/cmd/main.go`
+- Found in `services/account/cmd/main.go`
 - Offers endpoints to create, read, update, and delete account-related data
 
 ## Tools & Technologies
 
-DIGIT30 leverages a variety of modern technologies:
+DIGIT 3.0 leverages a variety of modern technologies:
 
 | Technology | Version | Purpose |
 |------------|---------|----------|
@@ -96,7 +96,7 @@ DIGIT30 leverages a variety of modern technologies:
 
 ## Deployment
 
-DIGIT30 is deployed using Docker Compose, which defines the services, networks, and volumes in a single YAML file.
+DIGIT 3.0 is deployed using Docker Compose, which defines the services, networks, and volumes in a single YAML file.
 
 ### Key Aspects
 - **Containerization**: Each service runs in its own container
@@ -150,7 +150,7 @@ Check the Identity Service: http://localhost:8000/identity/ping
 
 ## Security
 
-DIGIT30 implements comprehensive security measures:
+DIGIT 3.0 implements comprehensive security measures:
 
 ### Automated Security
 - Dependabot for automated security updates
