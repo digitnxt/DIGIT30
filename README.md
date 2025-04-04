@@ -119,6 +119,9 @@ Configuration is primarily managed via:
 git clone <repository-url>
 cd digitnxt
 
+# Navigate to docker-compose directory
+cd deployment/docker-compose
+
 # Build and run services
 docker-compose up --build -d
 ```
