@@ -1,124 +1,185 @@
-DIGIT30
+# DIGIT30
 
 DIGIT30 is a microservices-based platform built with Go, Gin, and several modern tools to demonstrate a scalable, observable, and well-orchestrated distributed system. It leverages Docker Compose for deployment, enabling rapid development, testing, and production readiness.
 
-Table of Contents
-	•	Architecture Overview
-	•	Services Overview
-	•	APIs
-	•	Tools & Technologies
-	•	Deployment
-	•	Configuration
-	•	Development Guidelines
-	•	Security
-	•	Versioning & Dependencies
+## Table of Contents
+- [Architecture Overview](#architecture-overview)
+- [Services Overview](#services-overview)
+- [APIs](#apis)
+- [Tools & Technologies](#tools--technologies)
+- [Deployment](#deployment)
+- [Configuration](#configuration)
+- [Development Guidelines](#development-guidelines)
+- [Security](#security)
+- [Versioning & Dependencies](#versioning--dependencies)
 
-Architecture Overview
+## Architecture Overview
 
 DIGIT30 follows a microservices architecture where individual components handle specific responsibilities. The system integrates service discovery, API gateway management, tracing, logging, and monitoring to ensure robust communication and observability across services.
 
-Services Overview
+## Services Overview
 
 The platform consists of multiple containerized services managed through Docker Compose. Key services include:
-	•	Postgres (Registry)
-A PostgreSQL database (version 14) used as a registry, with health checks to ensure database readiness.
-	•	Consul
-A service discovery tool (HashiCorp Consul 1.15) that facilitates service registration and health monitoring.
-	•	Kafka & Kafka Exporter
-Kafka (using Bitnami's image) serves as the messaging backbone, while Kafka Exporter provides metrics for monitoring.
-	•	Kong API Gateway & Kong DB
-	•	Kong: Acts as the API gateway with custom plugins (such as api-costing) for managing, monitoring, and securing API traffic.
-	•	Kong DB: A dedicated PostgreSQL instance (version 13) for Kong's internal database.
-	•	Kong Synchronizer
-A service (built from a Node.js application) ensuring data consistency across Kong and other system components.
-	•	Keycloak
-Provides authentication and authorization via Keycloak, enabling secure access to the platform.
-	•	Redis & Redis Exporter
-Redis is used for caching, and Redis Exporter collects metrics from Redis for Prometheus monitoring.
-	•	Jaeger
-Provides distributed tracing to monitor and troubleshoot microservice interactions.
-	•	Prometheus
-Collects metrics from all services. Prometheus is configured to scrape endpoints such as Kong's /metrics and others.
-	•	Grafana
-Visualizes the metrics collected by Prometheus, displaying dashboards for system health, API usage, and business metrics.
-	•	Identity Service
-A sample service (built with Go and Gin) demonstrating tracing, metrics, and service registration with Consul and Jaeger.
 
-APIs
+### Postgres (Registry)
+- PostgreSQL database (version 14) used as a registry
+- Includes health checks to ensure database readiness
+
+### Consul
+- Service discovery tool (HashiCorp Consul 1.15)
+- Facilitates service registration and health monitoring
+
+### Kafka & Kafka Exporter
+- Kafka (using Bitnami's image) serves as the messaging backbone
+- Kafka Exporter provides metrics for monitoring
+
+### Kong API Gateway & Kong DB
+- **Kong**: Acts as the API gateway with custom plugins (such as api-costing) for managing, monitoring, and securing API traffic
+- **Kong DB**: A dedicated PostgreSQL instance (version 13) for Kong's internal database
+
+### Kong Synchronizer
+- Service built from a Node.js application
+- Ensures data consistency across Kong and other system components
+
+### Keycloak
+- Provides authentication and authorization
+- Enables secure access to the platform
+
+### Redis & Redis Exporter
+- Redis is used for caching
+- Redis Exporter collects metrics from Redis for Prometheus monitoring
+
+### Jaeger
+- Provides distributed tracing
+- Monitors and troubleshoots microservice interactions
+
+### Prometheus
+- Collects metrics from all services
+- Configured to scrape endpoints such as Kong's /metrics and others
+
+### Grafana
+- Visualizes the metrics collected by Prometheus
+- Displays dashboards for system health, API usage, and business metrics
+
+### Identity Service
+- Sample service built with Go and Gin
+- Demonstrates tracing, metrics, and service registration with Consul and Jaeger
+
+## APIs
 
 DIGIT30 exposes several APIs for internal and external use:
-	•	Ping API (Health Check)
-Located in DIGIT30/services/common/identity/main.go, it provides a simple endpoint to verify that the service is running.
-	•	Account API
-Found in DIGIT30/services/account/cmd/main.go, it offers endpoints to create, read, update, and delete account-related data.
 
-Tools & Technologies
+### Ping API (Health Check)
+- Located in `DIGIT30/services/common/identity/main.go`
+- Provides a simple endpoint to verify that the service is running
+
+### Account API
+- Found in `DIGIT30/services/account/cmd/main.go`
+- Offers endpoints to create, read, update, and delete account-related data
+
+## Tools & Technologies
 
 DIGIT30 leverages a variety of modern technologies:
-	•	Go (1.24) & Gin: For building high-performance web services
-	•	Docker Compose: To orchestrate multiple containerized services
-	•	Consul: For service discovery and registration
-	•	Kong (3.9.0): As an API gateway, with custom plugins like api-costing for API-based costing
-	•	PostgreSQL: Used for both registry (14.x) and Kong's internal database (13.x)
-	•	Kafka: As a messaging system, along with its exporter for monitoring
-	•	Redis (7.x): For caching, supported by a Redis Exporter
-	•	Jaeger: For distributed tracing across services
-	•	Prometheus & Grafana (11.6.0): For monitoring, alerting, and visualizing system metrics
-	•	Keycloak: To handle authentication and authorization
 
-Deployment
+| Technology | Version | Purpose |
+|------------|---------|----------|
+| Go & Gin | 1.24 | High-performance web services |
+| Docker Compose | Latest | Container orchestration |
+| Consul | 1.15 | Service discovery and registration |
+| Kong | 3.9.0 | API gateway with custom plugins |
+| PostgreSQL | 14.x/13.x | Registry and Kong databases |
+| Kafka | Latest | Messaging system |
+| Redis | 7.x | Caching service |
+| Jaeger | Latest | Distributed tracing |
+| Prometheus & Grafana | 11.6.0 | Monitoring and visualization |
+| Keycloak | Latest | Authentication and authorization |
 
-DIGIT30 is deployed using Docker Compose, which defines the services, networks, and volumes in a single YAML file. Key aspects include:
-	•	Containerization: Each service runs in its own container, making it easier to scale and manage dependencies.
-	•	Networking: All services are connected through a common Docker network (app-network), enabling seamless inter-service communication.
-	•	Volumes: Data persistence is managed via Docker volumes (e.g., postgres-data, kong-db-data, kafka-data, etc.).
-	•	Service Dependencies: The Compose file uses depends_on with health and start conditions to ensure that services start in the correct order.
+## Deployment
 
-Configuration
+DIGIT30 is deployed using Docker Compose, which defines the services, networks, and volumes in a single YAML file.
 
-Configuration is primarily managed via environment variables specified in the Docker Compose file. This includes database credentials, API gateway settings, and plugin configurations. Additional configuration files (e.g., for Prometheus and Grafana) are mounted as volumes to enable dynamic updates without rebuilding containers.
+### Key Aspects
+- **Containerization**: Each service runs in its own container
+- **Networking**: All services connected through a common Docker network (app-network)
+- **Volumes**: Data persistence via Docker volumes
+- **Service Dependencies**: Managed through depends_on with health checks
 
-Development Guidelines
+## Configuration
 
-To get started with DIGIT30:
-	1.	Clone the Repository:
-Clone the repository and navigate to the desired service directory.
-	2.	Build and Run Services:
-For a full-stack environment, run:
+Configuration is primarily managed via:
+- Environment variables in Docker Compose file
+- Additional configuration files mounted as volumes
+- Dynamic updates without container rebuilds
 
+## Development Guidelines
+
+### 1. Getting Started
+```bash
+# Clone the repository
+git clone <repository-url>
+cd digitnxt
+
+# Build and run services
 docker-compose up --build -d
+```
 
-	Check Identity Service: Enter http://localhost:8000/identity/ping on browser. 
+### 2. Service Verification
+Check the Identity Service: http://localhost:8000/identity/ping
 
+### 3. Monitoring and Debugging
+- **Grafana**: http://localhost:3000
+  - View system dashboards
+- **Prometheus**: http://localhost:9090
+  - Query metrics (e.g., "digit_http_requests_total")
+- **Jaeger**: http://localhost:16686
+  - Distributed tracing
+  - Select "identity" and click "Find Traces"
 
-	3.	Monitoring and Debugging:
-	•	Access Grafana at http://localhost:3000 to view system dashboards.
-	•	Use Prometheus at http://localhost:9090 for querying metrics. e.g. you can enter "digit_http_requests_total" and hit Execute. 
-	•	Jaeger is available at http://localhost:16686 for distributed tracing. Select "identity" and click on "Find Traces"
-	4.	Service Discovery: http://localhost:8500/
-Ensure that Consul (running on port 8500) is correctly registering services, allowing for dynamic discovery and routing.
-	5.	API Gateway Management: http://localhost:8001/services 
-The Kong API gateway (available on ports 8000 and 8001) manages all API requests and integrates custom plugins like api-costing for detailed metrics and costing.
+### 4. Service Discovery
+- **Consul**: http://localhost:8500
+  - Monitor service registration
+  - Check service health
 
-Security
+### 5. API Gateway
+- **Kong Admin**: http://localhost:8001/services
+  - Manage API configurations
+  - Monitor plugin status
 
-DIGIT30 implements several security measures:
-	•	Automated Security Updates: Dependabot is configured to automatically check for security vulnerabilities in dependencies
-	•	Vulnerability Scanning: Regular security scans using govulncheck for Go dependencies
-	•	Authentication: Keycloak integration for secure user authentication
-	•	API Security: Kong API Gateway with rate limiting and authentication plugins
-	•	HTTPS Support: SSL/TLS configuration available for production deployments
-	•	Security Policy: Detailed security policy and vulnerability reporting process in .github/SECURITY.md
+## Security
 
-Versioning & Dependencies
+DIGIT30 implements comprehensive security measures:
 
-The project uses semantic versioning and maintains up-to-date dependencies:
-	•	Go: 1.24 (minimum required version)
-	•	Kong: 3.9.0
-	•	PostgreSQL: 14.x (Registry DB) and 13.x (Kong DB)
-	•	Redis: 7.x
-	•	Grafana: 11.6.0
-	•	Other dependencies are managed through go.mod and regularly updated via Dependabot
+### Automated Security
+- Dependabot for automated security updates
+- Regular govulncheck scans for Go dependencies
 
-For detailed version information and compatibility, check the respective go.mod files in each service directory.
+### Authentication & Authorization
+- Keycloak integration
+- Kong API Gateway security plugins
+- Rate limiting and authentication
+
+### Infrastructure Security
+- HTTPS/TLS support for production
+- Secure service communication
+- Detailed security policy in `.github/SECURITY.md`
+
+## Versioning & Dependencies
+
+### Core Components
+| Component | Version |
+|-----------|---------|
+| Go | 1.24 |
+| Kong | 3.9.0 |
+| PostgreSQL (Registry) | 14.x |
+| PostgreSQL (Kong) | 13.x |
+| Redis | 7.x |
+| Grafana | 11.6.0 |
+
+### Dependency Management
+- Go modules via `go.mod`
+- Automated updates via Dependabot
+- Regular security patches
+- Semantic versioning
+
+For detailed version information and compatibility, check the respective `go.mod` files in each service directory.
 	
