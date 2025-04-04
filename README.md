@@ -10,6 +10,8 @@ Table of Contents
 	•	Deployment
 	•	Configuration
 	•	Development Guidelines
+	•	Security
+	•	Versioning & Dependencies
 
 Architecture Overview
 
@@ -23,10 +25,10 @@ A PostgreSQL database (version 14) used as a registry, with health checks to ens
 	•	Consul
 A service discovery tool (HashiCorp Consul 1.15) that facilitates service registration and health monitoring.
 	•	Kafka & Kafka Exporter
-Kafka (using Bitnami’s image) serves as the messaging backbone, while Kafka Exporter provides metrics for monitoring.
+Kafka (using Bitnami's image) serves as the messaging backbone, while Kafka Exporter provides metrics for monitoring.
 	•	Kong API Gateway & Kong DB
 	•	Kong: Acts as the API gateway with custom plugins (such as api-costing) for managing, monitoring, and securing API traffic.
-	•	Kong DB: A dedicated PostgreSQL instance (version 13) for Kong’s internal database.
+	•	Kong DB: A dedicated PostgreSQL instance (version 13) for Kong's internal database.
 	•	Kong Synchronizer
 A service (built from a Node.js application) ensuring data consistency across Kong and other system components.
 	•	Keycloak
@@ -36,7 +38,7 @@ Redis is used for caching, and Redis Exporter collects metrics from Redis for Pr
 	•	Jaeger
 Provides distributed tracing to monitor and troubleshoot microservice interactions.
 	•	Prometheus
-Collects metrics from all services. Prometheus is configured to scrape endpoints such as Kong’s /metrics and others.
+Collects metrics from all services. Prometheus is configured to scrape endpoints such as Kong's /metrics and others.
 	•	Grafana
 Visualizes the metrics collected by Prometheus, displaying dashboards for system health, API usage, and business metrics.
 	•	Identity Service
@@ -53,16 +55,16 @@ Found in DIGIT30/services/account/cmd/main.go, it offers endpoints to create, re
 Tools & Technologies
 
 DIGIT30 leverages a variety of modern technologies:
-	•	Go & Gin: For building high-performance web services.
-	•	Docker Compose: To orchestrate multiple containerized services.
-	•	Consul: For service discovery and registration.
-	•	Kong: As an API gateway, with custom plugins like api-costing for API-based costing.
-	•	PostgreSQL: Used for both registry and Kong’s internal database.
-	•	Kafka: As a messaging system, along with its exporter for monitoring.
-	•	Redis: For caching, supported by a Redis Exporter.
-	•	Jaeger: For distributed tracing across services.
-	•	Prometheus & Grafana: For monitoring, alerting, and visualizing system metrics.
-	•	Keycloak: To handle authentication and authorization.
+	•	Go (1.24) & Gin: For building high-performance web services
+	•	Docker Compose: To orchestrate multiple containerized services
+	•	Consul: For service discovery and registration
+	•	Kong (3.9.0): As an API gateway, with custom plugins like api-costing for API-based costing
+	•	PostgreSQL: Used for both registry (14.x) and Kong's internal database (13.x)
+	•	Kafka: As a messaging system, along with its exporter for monitoring
+	•	Redis (7.x): For caching, supported by a Redis Exporter
+	•	Jaeger: For distributed tracing across services
+	•	Prometheus & Grafana (11.6.0): For monitoring, alerting, and visualizing system metrics
+	•	Keycloak: To handle authentication and authorization
 
 Deployment
 
@@ -97,4 +99,26 @@ docker-compose up --build -d
 Ensure that Consul (running on port 8500) is correctly registering services, allowing for dynamic discovery and routing.
 	5.	API Gateway Management: http://localhost:8001/services 
 The Kong API gateway (available on ports 8000 and 8001) manages all API requests and integrates custom plugins like api-costing for detailed metrics and costing.
+
+Security
+
+DIGIT30 implements several security measures:
+	•	Automated Security Updates: Dependabot is configured to automatically check for security vulnerabilities in dependencies
+	•	Vulnerability Scanning: Regular security scans using govulncheck for Go dependencies
+	•	Authentication: Keycloak integration for secure user authentication
+	•	API Security: Kong API Gateway with rate limiting and authentication plugins
+	•	HTTPS Support: SSL/TLS configuration available for production deployments
+	•	Security Policy: Detailed security policy and vulnerability reporting process in .github/SECURITY.md
+
+Versioning & Dependencies
+
+The project uses semantic versioning and maintains up-to-date dependencies:
+	•	Go: 1.24 (minimum required version)
+	•	Kong: 3.9.0
+	•	PostgreSQL: 14.x (Registry DB) and 13.x (Kong DB)
+	•	Redis: 7.x
+	•	Grafana: 11.6.0
+	•	Other dependencies are managed through go.mod and regularly updated via Dependabot
+
+For detailed version information and compatibility, check the respective go.mod files in each service directory.
 	
