@@ -24,8 +24,9 @@ func InitDB(connStr string) {
 // CreateTables creates all required tables if they do not already exist.
 func CreateTables(db *sql.DB) {
 	createAccountsTableSQL := `
+	CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 	CREATE TABLE IF NOT EXISTS accounts (
-		id SERIAL PRIMARY KEY,
+		id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 		accountname VARCHAR(255) UNIQUE NOT NULL,
 		admin_email VARCHAR(255),
 		admin_phone VARCHAR(255),

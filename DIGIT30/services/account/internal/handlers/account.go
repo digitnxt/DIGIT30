@@ -1,13 +1,18 @@
 package handlers
 
 import (
-	"database/sql"
-	"net/http"
-	"strconv"
-
 	"account/internal/database"
 	"account/internal/models"
+	"context"
+	"database/sql"
+	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,14 +23,34 @@ func CreateAccount(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": err.Error()})
 	}
 
+	// Extract admin password from the request payload.
+	adminPassword := account.AdminPassword
+	if adminPassword == "" {
+		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Admin password is required"})
+	}
+
+	// Insert account into the DB.
 	query := `INSERT INTO accounts (accountname, admin_email, admin_phone, config)
               VALUES ($1, $2, $3, $4)
               RETURNING id, created_at`
 	err := database.DB.QueryRow(query, account.AccountName, account.AdminEmail, account.AdminPhone, account.Config).
 		Scan(&account.ID, &account.CreatedAt)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return c.JSON(http.StatusNotFound, echo.Map{"error": "Account not found"})
+		}
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": err.Error()})
 	}
+
+	// Create a Keycloak realm and related resources for this account,
+	// passing in the admin email and password from the request.
+	if err := createKeycloakRealm(account.AccountName, account.AdminEmail, adminPassword); err != nil {
+		log.Printf("Account created but failed to create Keycloak realm and resources: %v", err)
+		return c.JSON(http.StatusInternalServerError, echo.Map{
+			"error": "Account created but failed to create Keycloak realm and resources: " + err.Error(),
+		})
+	}
+
 	return c.JSON(http.StatusCreated, account)
 }
 
@@ -125,4 +150,104 @@ func DeleteAccount(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, echo.Map{"error": "Account not found"})
 	}
 	return c.JSON(http.StatusOK, echo.Map{"message": "Account deleted"})
+}
+
+// createKeycloakRealm creates a new realm, an admin user with the realm-admin role,
+// and a public client in Keycloak.
+// It now takes adminEmail and adminPassword from the request payload.
+func createKeycloakRealm(realmName, adminEmail, adminPassword string) error {
+	// Use environment variable for Keycloak base URL (e.g., "http://localhost:8090")
+	keycloakURL := os.Getenv("KEYCLOAK_BASE_URL")
+	client := gocloak.NewClient(keycloakURL)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Login to Keycloak as an admin.
+	token, err := client.LoginAdmin(ctx, os.Getenv("KEYCLOAK_USERNAME"), os.Getenv("KEYCLOAK_PASSWORD"), os.Getenv("KEYCLOAK_REALM"))
+	if err != nil {
+		log.Printf("Failed to login to Keycloak: %v", err)
+		return err
+	}
+
+	// Create a new realm.
+	realmRep := gocloak.RealmRepresentation{
+		Realm:   &realmName,
+		Enabled: gocloak.BoolP(true),
+	}
+	if _, err := client.CreateRealm(ctx, token.AccessToken, realmRep); err != nil {
+		log.Printf("Failed to create realm %s: %v", realmName, err)
+		return err
+	}
+	log.Printf("Successfully created realm %s", realmName)
+
+	// Create an admin user for the new realm using the provided adminEmail.
+	adminUser := gocloak.User{
+		Username: gocloak.StringP("admin"),
+		Email:    gocloak.StringP(adminEmail),
+		Enabled:  gocloak.BoolP(true),
+	}
+	userID, err := client.CreateUser(ctx, token.AccessToken, realmName, adminUser)
+	if err != nil {
+		log.Printf("Failed to create admin user for realm %s: %v", realmName, err)
+		return err
+	}
+	log.Printf("Admin user created with ID: %s", userID)
+
+	// Set password for the admin user using the provided adminPassword.
+	if err := client.SetPassword(ctx, token.AccessToken, userID, realmName, adminPassword, false); err != nil {
+		log.Printf("Failed to set password for admin user: %v", err)
+		return err
+	}
+
+	// Retrieve the "realm-admin" role from the realm.
+	realmAdminRole, err := client.GetRealmRole(ctx, token.AccessToken, realmName, "realm-admin")
+	if err != nil {
+		// If the role is not found, create it.
+		if strings.Contains(err.Error(), "404") {
+			newRole := gocloak.Role{
+				Name: gocloak.StringP("realm-admin"),
+			}
+			if _, err := client.CreateRealmRole(ctx, token.AccessToken, realmName, newRole); err != nil {
+				log.Printf("Failed to create realm-admin role: %v", err)
+				return err
+			}
+			// Retrieve the newly created role.
+			realmAdminRole, err = client.GetRealmRole(ctx, token.AccessToken, realmName, "realm-admin")
+			if err != nil {
+				log.Printf("Failed to get realm-admin role after creating it for realm %s: %v", realmName, err)
+				return err
+			}
+		} else {
+			log.Printf("Failed to get realm-admin role for realm %s: %v", realmName, err)
+			return err
+		}
+	}
+
+	// Assign the "realm-admin" role to the admin user.
+	err = client.AddRealmRoleToUser(ctx, token.AccessToken, realmName, userID, []gocloak.Role{*realmAdminRole})
+	if err != nil {
+		log.Printf("Failed to assign realm-admin role to admin user: %v", err)
+		return err
+	}
+	log.Printf("Realm-admin role assigned to admin user")
+
+	// Create a public client in the new realm.
+	publicClient := gocloak.Client{
+		ClientID:                  gocloak.StringP("public-client"),
+		Name:                      gocloak.StringP("Public Client"),
+		PublicClient:              gocloak.BoolP(true),
+		RedirectURIs:              &[]string{"*"},
+		StandardFlowEnabled:       gocloak.BoolP(true),
+		ImplicitFlowEnabled:       gocloak.BoolP(true),
+		DirectAccessGrantsEnabled: gocloak.BoolP(true),
+	}
+	clientID, err := client.CreateClient(ctx, token.AccessToken, realmName, publicClient)
+	if err != nil {
+		log.Printf("Failed to create public client in realm %s: %v", realmName, err)
+		return err
+	}
+	log.Printf("Public client created with ID: %s", clientID)
+
+	return nil
 }
