@@ -1,6 +1,14 @@
 # DIGIT 3.0
 
-DIGIT 3.0 is a microservices-based platform built with Go, Gin, and several modern tools to demonstrate a scalable, observable, and well-orchestrated distributed system. It leverages Docker Compose for deployment, enabling rapid development, testing, and production readiness.
+DIGIT 3.0 is an open source public service delivery platform designed to empower governments and public institutions. Built with modern microservices architecture using Go, Gin, and cutting-edge tools, it provides a scalable, observable, and well-orchestrated foundation for delivering digital public services. The platform leverages Docker Compose for deployment, enabling rapid development, testing, and production readiness.
+
+## Key Features
+- **Service Delivery**: Purpose-built for public service delivery and government operations
+- **Open Source**: Fully open source platform encouraging community collaboration and customization
+- **Scalable Architecture**: Microservices-based design supporting high scalability and reliability
+- **Security First**: Comprehensive security measures protecting sensitive public service data
+- **Observable**: Complete monitoring and tracing capabilities for transparent operations
+- **Modern Stack**: Built with cutting-edge technologies ensuring long-term maintainability
 
 ## Table of Contents
 - [Architecture Overview](#architecture-overview)
