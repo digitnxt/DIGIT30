@@ -1,5 +1,5 @@
-// pkg/documentation/documentation.go
-package documentation
+// Package docs provides utilities for setting up API documentation using Swagger.
+package docs
 
 import (
 	"github.com/gin-gonic/gin"

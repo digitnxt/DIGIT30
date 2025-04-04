@@ -2,9 +2,9 @@
 package all
 
 import (
-	"github.com/digitnxt/digit/pkg/observability"
 	"github.com/digitnxt/digit/pkg/discovery"
-	"github.com/digitnxt/digit/pkg/documentation"
+	"github.com/digitnxt/digit/pkg/docs"
+	"github.com/digitnxt/digit/pkg/observability"
 )
 
 // Observability functions.
@@ -24,5 +24,5 @@ var (
 
 // Documentation functions.
 var (
-	SetupDocumentation = documentation.SetupDocumentation
+	SetupDocumentation = docs.SetupDocumentation
 )
