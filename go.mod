@@ -1,1 +1,1 @@
-module github.com/digitnxt/digit
+module ../../
