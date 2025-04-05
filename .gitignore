@@ -1,0 +1,126 @@
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/vendor/
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Kubernetes
+*.kubeconfig
+*.pem
+*.key
+*.crt
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+log/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Build output
+bin/
+out/
+build/
+
+# Coverage
+coverage/
+*.cover
+.coverage
+
+# Dependencies
+node_modules/
+vendor/
+venv/
+.venv/
+
+# Local development
+local/
+dev/
+development/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Model files
+**/models/
+*.bin
+*.gguf
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.h5
+*.hdf5
+*.onnx
+*.tflite
+*.pb
+*.pkl
+*.joblib
+*.npy
+*.npz
+*.model
+*.weights
+*.index
+*.data-00000-of-00001
+*.meta
+*.index
+*.data
+*.tensor
+*.tensorflow
+*.tensorboard
+*.checkpoint
+*.model
+*.weights
+*.index
+*.data-00000-of-00001
+*.meta
+*.index
+*.data
+*.tensor
+*.tensorflow
+*.tensorboard
+*.checkpoint

@@ -1,0 +1,190 @@
+{{- if .Values.infrastructureServices.kong.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-kong
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.infrastructureServices.kong.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kong
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kong
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: kong
+          image: "{{ .Values.infrastructureServices.kong.image.repository }}:{{ .Values.infrastructureServices.kong.image.tag }}"
+          imagePullPolicy: {{ .Values.infrastructureServices.kong.image.pullPolicy }}
+          ports:
+            - name: proxy
+              containerPort: {{ .Values.infrastructureServices.kong.service.ports.proxy }}
+              protocol: TCP
+            - name: admin
+              containerPort: {{ .Values.infrastructureServices.kong.service.ports.admin }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.infrastructureServices.kong.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: admin
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: admin
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: KONG_DATABASE
+              value: "postgres"
+            - name: KONG_PG_HOST
+              value: {{ include "digitnxt.fullname" . }}-kong-db
+            - name: KONG_PG_PORT
+              value: {{ .Values.infrastructureServices.kong.db.port | quote }}
+            - name: KONG_PG_USER
+              value: {{ .Values.infrastructureServices.kong.db.user }}
+            - name: KONG_PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "digitnxt.secretName" . }}-kong-db
+                  key: password
+            - name: KONG_PG_DATABASE
+              value: {{ .Values.infrastructureServices.kong.db.database }}
+            - name: KONG_PROXY_ACCESS_LOG
+              value: /dev/stdout
+            - name: KONG_ADMIN_ACCESS_LOG
+              value: /dev/stdout
+            - name: KONG_PROXY_ERROR_LOG
+              value: /dev/stderr
+            - name: KONG_ADMIN_ERROR_LOG
+              value: /dev/stderr
+            - name: KONG_ADMIN_LISTEN
+              value: "0.0.0.0:{{ .Values.infrastructureServices.kong.service.ports.admin }}"
+            - name: KONG_PROXY_LISTEN
+              value: "0.0.0.0:{{ .Values.infrastructureServices.kong.service.ports.proxy }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-kong
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.infrastructureServices.kong.service.type }}
+  ports:
+    - port: {{ .Values.infrastructureServices.kong.service.ports.proxy }}
+      targetPort: proxy
+      protocol: TCP
+      name: proxy
+    - port: {{ .Values.infrastructureServices.kong.service.ports.admin }}
+      targetPort: admin
+      protocol: TCP
+      name: admin
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kong
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-kong-db
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.infrastructureServices.kong.db.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kong-db
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kong-db
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: kong-db
+          image: "{{ .Values.infrastructureServices.kong.db.image.repository }}:{{ .Values.infrastructureServices.kong.db.image.tag }}"
+          imagePullPolicy: {{ .Values.infrastructureServices.kong.db.image.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: {{ .Values.infrastructureServices.kong.db.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.infrastructureServices.kong.db.resources | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.infrastructureServices.kong.db.user }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.infrastructureServices.kong.db.user }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.infrastructureServices.kong.db.user }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "digitnxt.secretName" . }}-kong-db
+                  key: password
+            - name: POSTGRES_DB
+              value: {{ .Values.infrastructureServices.kong.db.database }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: kong-db
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "digitnxt.pvcName" . }}-kong-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-kong-db
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.infrastructureServices.kong.db.service.type }}
+  ports:
+    - port: {{ .Values.infrastructureServices.kong.db.port }}
+      targetPort: postgresql
+      protocol: TCP
+      name: postgresql
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kong-db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "digitnxt.pvcName" . }}-kong-db
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.infrastructureServices.kong.db.persistence.size }}
+  storageClassName: {{ .Values.global.storageClass }}
+{{- end }} 

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity
+  template:
+    metadata:
+      labels:
+        app: identity
+    spec:
+      containers:
+      - name: identity
+        image: gcr.io/$PROJECT_ID/identity:latest
+        ports:
+        - containerPort: 8080
+        - containerPort: 9464
+          name: metrics
+        env:
+        - name: CONSUL_HTTP_ADDR
+          value: "consul:8500"
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "256Mi"
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity
+spec:
+  selector:
+    app: identity
+  ports:
+  - port: 8080
+    targetPort: 8080
+  - port: 9464
+    targetPort: 9464
+    name: metrics
+  type: ClusterIP 

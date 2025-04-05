@@ -1,0 +1,139 @@
+{{- if .Values.infrastructureServices.grafana.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-grafana
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.infrastructureServices.grafana.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: grafana
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: grafana
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: grafana
+          image: "{{ .Values.infrastructureServices.grafana.image.repository }}:{{ .Values.infrastructureServices.grafana.image.tag }}"
+          imagePullPolicy: {{ .Values.infrastructureServices.grafana.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.infrastructureServices.grafana.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.infrastructureServices.grafana.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: {{ .Values.infrastructureServices.grafana.auth.username }}
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "digitnxt.secretName" . }}-grafana
+                  key: password
+            - name: GF_AUTH_ANONYMOUS_ENABLED
+              value: "false"
+            - name: GF_AUTH_BASIC_ENABLED
+              value: "true"
+            - name: GF_AUTH_DISABLE_LOGIN_FORM
+              value: "false"
+            - name: GF_AUTH_DISABLE_SIGNOUT_MENU
+              value: "false"
+            - name: GF_SERVER_ROOT_URL
+              value: "http://{{ include "digitnxt.fullname" . }}-grafana:{{ .Values.infrastructureServices.grafana.service.port }}"
+            - name: GF_SERVER_HTTP_PORT
+              value: {{ .Values.infrastructureServices.grafana.service.port | quote }}
+            - name: GF_DATABASE_TYPE
+              value: "sqlite3"
+            - name: GF_DATABASE_PATH
+              value: "/var/lib/grafana/grafana.db"
+            - name: GF_DEFAULT_INSTANCE_DASHBOARD_UID
+              value: "default"
+            - name: GF_INSTALL_PLUGINS
+              value: "grafana-piechart-panel,grafana-worldmap-panel"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/grafana
+              subPath: grafana
+            - name: config
+              mountPath: /etc/grafana
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "digitnxt.pvcName" . }}-grafana
+        - name: config
+          configMap:
+            name: {{ include "digitnxt.configMapName" . }}-grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-grafana
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.infrastructureServices.grafana.service.type }}
+  ports:
+    - port: {{ .Values.infrastructureServices.grafana.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: grafana
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "digitnxt.configMapName" . }}-grafana
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+data:
+  grafana.ini: |
+    [server]
+    root_url = http://{{ include "digitnxt.fullname" . }}-grafana:{{ .Values.infrastructureServices.grafana.service.port }}
+    [auth]
+    disable_login_form = false
+    [auth.anonymous]
+    enabled = false
+    [auth.basic]
+    enabled = true
+    [datasources]
+    [datasources.prometheus]
+    name = Prometheus
+    type = prometheus
+    url = http://{{ include "digitnxt.fullname" . }}-prometheus:{{ .Values.infrastructureServices.prometheus.service.port }}
+    access = proxy
+    isDefault = true
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "digitnxt.pvcName" . }}-grafana
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.infrastructureServices.grafana.persistence.size }}
+  storageClassName: {{ .Values.global.storageClass }}
+{{- end }} 

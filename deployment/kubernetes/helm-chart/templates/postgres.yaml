@@ -1,0 +1,97 @@
+{{- if .Values.infrastructureServices.postgresql.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-postgresql
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "digitnxt.fullname" . }}-postgresql
+  replicas: {{ .Values.infrastructureServices.postgresql.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgresql
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgresql
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: postgresql
+          image: "{{ .Values.infrastructureServices.postgresql.image.repository }}:{{ .Values.infrastructureServices.postgresql.image.tag }}"
+          imagePullPolicy: {{ .Values.infrastructureServices.postgresql.image.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: {{ .Values.infrastructureServices.postgresql.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.infrastructureServices.postgresql.resources | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.infrastructureServices.postgresql.auth.username }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - {{ .Values.infrastructureServices.postgresql.auth.username }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.infrastructureServices.postgresql.auth.username }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "digitnxt.secretName" . }}-postgresql
+                  key: password
+            - name: POSTGRES_DB
+              value: {{ .Values.infrastructureServices.postgresql.auth.database }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: postgresql
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "digitnxt.pvcName" . }}-postgresql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-postgresql
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.infrastructureServices.postgresql.service.type }}
+  ports:
+    - port: {{ .Values.infrastructureServices.postgresql.service.port }}
+      targetPort: postgresql
+      protocol: TCP
+      name: postgresql
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "digitnxt.pvcName" . }}-postgresql
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.infrastructureServices.postgresql.persistence.size }}
+  storageClassName: {{ .Values.global.storageClass }}
+{{- end }} 

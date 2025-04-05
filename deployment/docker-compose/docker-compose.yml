@@ -231,19 +231,93 @@ services:
       prometheus:
         condition: service_healthy
 
-  # account:
-  #   build:
-  #     context: ../../services/account
-  #     dockerfile: Dockerfile
-  #   container_name: account
-  #   ports:
-  #     - "0:8080"
-  #     - "9464:9464"    # 🔥 expose metrics port
-  #   networks:
-  #     - app-network
-  #   depends_on:
-  #     consul:
-  #       condition: service_started
+  model-context-service:
+    build:
+      context: ../../services/common/model-context-service
+      dockerfile: Dockerfile
+    container_name: model-context-service
+    ports:
+      - "8085:8085"
+    networks:
+      - app-network
+    depends_on:
+      consul:
+        condition: service_healthy
+      identity:
+        condition: service_started
+
+  llama-server:
+    image: ghcr.io/ggerganov/llama.cpp:full
+    container_name: llama-server
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ./models:/models:ro
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    command: /bin/server -m /models/qwen2-7b-instruct-q5_k_m.gguf -c 2048 -ngl 35 -t 8 -cb 512 --host 0.0.0.0 --port 8082
+    ports:
+      - "8082:8082"
+    networks:
+      - app-network
+
+  llm-client:
+    build:
+      context: ../../services/backbone/llm
+      dockerfile: Dockerfile.llm_client
+    container_name: llm-client
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://llama-server:8082/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      llama-server:
+        condition: service_healthy
+      identity:
+        condition: service_started
+      consul:
+        condition: service_healthy
+
+  mcp-service:
+    build:
+      context: ../../services/common/mcp-service
+      dockerfile: Dockerfile
+    container_name: mcp-service
+    ports:
+      - "8086:8086"
+    networks:
+      - app-network
+    depends_on:
+      - model-context-service
+      - llama-server
+      - consul
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8086/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# account:
+#   build:
+#     context: ../../services/account
+#     dockerfile: Dockerfile
+#   container_name: account
+#   ports:
+#     - "0:8080"
+#     - "9464:9464"    # 🔥 expose metrics port
+#   networks:
+#     - app-network
+#   depends_on:
+#     consul:
+#       condition: service_started
 
 networks:
   app-network:

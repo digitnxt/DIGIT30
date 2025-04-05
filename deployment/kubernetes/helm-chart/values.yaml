@@ -1,0 +1,299 @@
+# Global configuration
+global:
+  environment: production
+  domain: digitnxt.com
+  storageClass: standard
+  imagePullSecrets: []
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    - secretName: digitnxt-tls
+      hosts:
+        - api.digitnxt.com
+        - grafana.digitnxt.com
+        - prometheus.digitnxt.com
+        - jaeger.digitnxt.com
+
+# Core services
+modelContextService:
+  enabled: true
+  image:
+    repository: gcr.io/$PROJECT_ID/model-context-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 100m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 8085
+
+mcpService:
+  enabled: true
+  image:
+    repository: gcr.io/$PROJECT_ID/mcp-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 100m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 8086
+
+llamaServer:
+  enabled: true
+  image:
+    repository: ghcr.io/ggerganov/llama.cpp
+    tag: full
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 4Gi
+      nvidia.com/gpu: 1
+    requests:
+      cpu: 500m
+      memory: 2Gi
+  service:
+    type: ClusterIP
+    port: 8082
+  modelPath: /models/qwen2-7b-instruct-q5_k_m.gguf
+  gpuLayers: 35
+  threads: 8
+  batchSize: 512
+
+identity:
+  enabled: true
+  image:
+    repository: gcr.io/$PROJECT_ID/identity
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 100m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 8080
+
+llmClient:
+  enabled: true
+  image:
+    repository: gcr.io/$PROJECT_ID/llm-client
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 100m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  service:
+    type: ClusterIP
+    port: 8080
+
+# Infrastructure services
+postgresql:
+  enabled: true
+  global:
+    postgresql:
+      auth:
+        username: admin
+        database: registry
+  primary:
+    persistence:
+      size: 5Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+kafka:
+  enabled: true
+  persistence:
+    size: 5Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+redis:
+  enabled: true
+  master:
+    persistence:
+      size: 2Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+kong:
+  enabled: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  postgresql:
+    enabled: true
+    auth:
+      username: kong
+      database: kong
+
+keycloak:
+  enabled: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  postgresql:
+    enabled: true
+    auth:
+      username: keycloak
+      database: keycloak
+
+jaeger:
+  enabled: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+prometheus:
+  enabled: true
+  server:
+    persistentVolume:
+      size: 5Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+grafana:
+  enabled: true
+  persistence:
+    size: 5Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+# Supporting services
+kafkaExporter:
+  enabled: true
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+redisExporter:
+  enabled: true
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Network policies
+networkPolicies:
+  enabled: true
+  allowIngress: true
+  allowEgress: true
+
+# Security
+security:
+  podSecurityPolicies:
+    enabled: true
+  rbac:
+    enabled: true
+  secrets:
+    enabled: true
+
+# Monitoring
+monitoring:
+  enabled: true
+  stackdriver:
+    enabled: true
+  auditLogging:
+    enabled: true
+
+# Backup
+backup:
+  enabled: true
+  schedule: "0 0 * * *"
+  retention: 7d
+
+# Autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+# Load Balancer configuration
+loadBalancer:
+  enabled: true
+  ip: ""  # Leave empty for ephemeral IP
+  sourceRanges:
+    - 0.0.0.0/0  # Allow all traffic for testing
+  annotations:
+    cloud.google.com/load-balancer-type: "External"  # Use external load balancer
+    cloud.google.com/neg: '{"ingress": true}'  # Enable container-native load balancing
+    cloud.google.com/load-balancer-scheme: "external"  # Use external IP
+    cloud.google.com/load-balancer-backend-timeout: "30"  # Shorter timeout
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 8443
+      protocol: TCP 

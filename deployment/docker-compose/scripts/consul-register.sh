@@ -35,5 +35,6 @@ register_service kong kong kong 8000
 register_service kong-admin kong-admin kong 8001
 register_service prometheus prometheus prometheus 9090
 register_service grafana grafana grafana 3000
+register_service model-context model-context model-context-service 8085
 
 echo "✅ All registration requests sent"

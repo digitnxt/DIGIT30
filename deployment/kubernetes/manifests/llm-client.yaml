@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-client
+  template:
+    metadata:
+      labels:
+        app: llm-client
+    spec:
+      containers:
+      - name: llm-client
+        image: gcr.io/$PROJECT_ID/llm-client:latest
+        env:
+        - name: CONSUL_HTTP_ADDR
+          value: "consul:8500"
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "256Mi"
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llm-client
+spec:
+  selector:
+    app: llm-client
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP 

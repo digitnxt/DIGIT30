@@ -111,6 +111,7 @@ func StartSpan(ctx context.Context, spanName string) (context.Context, trace.Spa
 	tracer := otel.Tracer("identity")
 	return tracer.Start(ctx, spanName)
 }
+
 // TracingMiddleware is a Gin middleware that creates a tracing span for each incoming request.
 func TracingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {

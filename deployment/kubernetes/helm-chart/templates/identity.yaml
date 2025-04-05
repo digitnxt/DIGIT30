@@ -1,0 +1,78 @@
+{{- if .Values.coreServices.identity.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-identity
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.coreServices.identity.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: identity
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: identity
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: identity
+          image: "{{ .Values.coreServices.identity.image.repository }}:{{ .Values.coreServices.identity.image.tag }}"
+          imagePullPolicy: {{ .Values.coreServices.identity.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.coreServices.identity.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.coreServices.identity.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: CONSUL_HOST
+              value: "consul-server"
+            - name: CONSUL_PORT
+              value: "8500"
+            - name: SERVICE_NAME
+              value: "identity-service"
+            - name: KEYCLOAK_URL
+              value: "http://{{ include "digitnxt.fullname" . }}-keycloak:{{ .Values.infrastructureServices.keycloak.service.port }}"
+            - name: KEYCLOAK_REALM
+              value: {{ .Values.infrastructureServices.keycloak.realm }}
+            - name: KEYCLOAK_CLIENT_ID
+              value: {{ .Values.infrastructureServices.keycloak.clientId }}
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "digitnxt.secretName" . }}-keycloak
+                  key: client-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-identity
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.coreServices.identity.service.type }}
+  ports:
+    - port: {{ .Values.coreServices.identity.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: identity
+{{- end }} 

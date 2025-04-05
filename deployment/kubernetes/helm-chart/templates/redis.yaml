@@ -1,0 +1,91 @@
+{{- if .Values.infrastructureServices.redis.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-redis
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "digitnxt.fullname" . }}-redis
+  replicas: {{ .Values.infrastructureServices.redis.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: redis
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: redis
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: redis
+          image: "{{ .Values.infrastructureServices.redis.image.repository }}:{{ .Values.infrastructureServices.redis.image.tag }}"
+          imagePullPolicy: {{ .Values.infrastructureServices.redis.image.pullPolicy }}
+          ports:
+            - name: redis
+              containerPort: {{ .Values.infrastructureServices.redis.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.infrastructureServices.redis.resources | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "digitnxt.secretName" . }}-redis
+                  key: password
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              subPath: redis
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "digitnxt.pvcName" . }}-redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-redis
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.infrastructureServices.redis.service.type }}
+  ports:
+    - port: {{ .Values.infrastructureServices.redis.service.port }}
+      targetPort: redis
+      protocol: TCP
+      name: redis
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "digitnxt.pvcName" . }}-redis
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.infrastructureServices.redis.persistence.size }}
+  storageClassName: {{ .Values.global.storageClass }}
+{{- end }} 

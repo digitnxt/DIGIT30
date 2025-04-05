@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-context-service
+  labels:
+    app: model-context-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-context-service
+  template:
+    metadata:
+      labels:
+        app: model-context-service
+    spec:
+      containers:
+      - name: model-context-service
+        image: gcr.io/$PROJECT_ID/model-context-service:latest
+        ports:
+        - containerPort: 8085
+        env:
+        - name: CONSUL_HTTP_ADDR
+          value: "consul:8500"
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "256Mi"
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-context-service
+spec:
+  selector:
+    app: model-context-service
+  ports:
+  - port: 8085
+    targetPort: 8085
+  type: ClusterIP 

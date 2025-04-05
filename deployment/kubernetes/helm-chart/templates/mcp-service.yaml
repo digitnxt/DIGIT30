@@ -1,0 +1,69 @@
+{{- if .Values.coreServices.mcpService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-mcp
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.coreServices.mcpService.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: mcp
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: mcp
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: mcp
+          image: "{{ .Values.coreServices.mcpService.image.repository }}:{{ .Values.coreServices.mcpService.image.tag }}"
+          imagePullPolicy: {{ .Values.coreServices.mcpService.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.coreServices.mcpService.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.coreServices.mcpService.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: CONSUL_HOST
+              value: "consul-server"
+            - name: CONSUL_PORT
+              value: "8500"
+            - name: SERVICE_NAME
+              value: "mcp-service"
+            - name: MODEL_CONTEXT_SERVICE_URL
+              value: "http://{{ include "digitnxt.fullname" . }}-model-context:{{ .Values.coreServices.modelContextService.service.port }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-mcp
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.coreServices.mcpService.service.type }}
+  ports:
+    - port: {{ .Values.coreServices.mcpService.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: mcp
+{{- end }} 

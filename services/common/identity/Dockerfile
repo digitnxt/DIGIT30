@@ -1,5 +1,5 @@
 # Use Go base image for building
-FROM golang:1.22.12-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install Git (required for some swag operations)
 RUN apk update && apk add --no-cache git

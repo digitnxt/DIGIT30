@@ -1,0 +1,26 @@
+{{- if .Values.loadBalancer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-loadbalancer
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.loadBalancer.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  ports:
+    {{- range .Values.loadBalancer.ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort }}
+      protocol: {{ .protocol }}
+    {{- end }}
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+  loadBalancerIP: {{ .Values.loadBalancer.ip | quote }}
+  loadBalancerSourceRanges:
+    {{- toYaml .Values.loadBalancer.sourceRanges | nindent 4 }}
+{{- end }} 

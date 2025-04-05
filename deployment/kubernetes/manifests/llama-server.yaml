@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-server
+  labels:
+    app: llama-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llama-server
+  template:
+    metadata:
+      labels:
+        app: llama-server
+    spec:
+      containers:
+      - name: llama-server
+        image: ghcr.io/ggerganov/llama.cpp:full
+        ports:
+        - containerPort: 8082
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "4Gi"
+            nvidia.com/gpu: 1
+          requests:
+            cpu: "500m"
+            memory: "2Gi"
+        command:
+        - /bin/sh
+        - -c
+        - |
+          server --host 0.0.0.0 --port 8082 \
+            --model /models/qwen2-7b-instruct-q5_k_m.gguf \
+            --n-gpu-layers 35 \
+            --threads 8 \
+            --batch-size 512
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-server
+spec:
+  selector:
+    app: llama-server
+  ports:
+  - port: 8082
+    targetPort: 8082
+  type: ClusterIP 

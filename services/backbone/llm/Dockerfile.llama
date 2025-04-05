@@ -1,0 +1,36 @@
+FROM ubuntu:22.04
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone and build llama.cpp
+WORKDIR /app
+RUN git clone https://github.com/ggerganov/llama.cpp.git && \
+    cd llama.cpp && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    cmake --build . --config Release
+
+# Copy the model from local cache
+WORKDIR /models
+COPY /Users/manishsv/Library/Caches/llama.cpp/Qwen_Qwen2-7B-Instruct-GGUF_qwen2-7b-instruct-q5_k_m.gguf .
+
+# Expose the server port
+EXPOSE 8082
+
+# Create a health check script
+RUN echo '#!/bin/bash\n\
+curl -f http://localhost:8082/v1/chat/completions -X POST -H "Content-Type: application/json" -d "{\"messages\":[{\"role\":\"user\",\"content\":\"test\"}]}"\n\
+exit $?' > /healthcheck.sh && \
+chmod +x /healthcheck.sh
+
+# Start the server with the working configuration
+CMD ["/app/llama.cpp/build/bin/main", "-m", "/models/qwen2-7b-instruct-q5_k_m.gguf", "-c", "4096", "--port", "8082", "--n-gpu-layers", "20"] 

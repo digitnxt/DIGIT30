@@ -1,0 +1,27 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "digitnxt.fullname" . }}
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      interval: {{ .Values.monitoring.interval }}
+      path: {{ .Values.monitoring.path }}
+      {{- if .Values.monitoring.scheme }}
+      scheme: {{ .Values.monitoring.scheme }}
+      {{- end }}
+      {{- if .Values.monitoring.tlsConfig }}
+      tlsConfig:
+        {{- toYaml .Values.monitoring.tlsConfig | nindent 8 }}
+      {{- end }}
+      {{- if .Values.monitoring.basicAuth }}
+      basicAuth:
+        {{- toYaml .Values.monitoring.basicAuth | nindent 8 }}
+      {{- end }}
+{{- end }} 

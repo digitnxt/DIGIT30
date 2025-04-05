@@ -1,0 +1,89 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-backup
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: {{ .Values.backup.image.repository }}:{{ .Values.backup.image.tag }}
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  # Backup PostgreSQL
+                  {{- if .Values.postgresql.enabled }}
+                  pg_dump -h {{ .Release.Name }}-postgresql -U {{ .Values.postgresql.auth.username }} {{ .Values.postgresql.auth.database }} > /backup/postgresql.sql
+                  {{- end }}
+                  # Backup Redis
+                  {{- if .Values.redis.enabled }}
+                  redis-cli -h {{ .Release.Name }}-redis save
+                  cp /data/dump.rdb /backup/redis.rdb
+                  {{- end }}
+                  # Backup Keycloak
+                  {{- if .Values.keycloak.enabled }}
+                  curl -X POST "http://{{ .Release.Name }}-keycloak:8080/auth/admin/realms/master/export" \
+                    -H "Authorization: Bearer $(curl -s -X POST http://{{ .Release.Name }}-keycloak:8080/auth/realms/master/protocol/openid-connect/token \
+                    -d "client_id=admin-cli" \
+                    -d "username={{ .Values.keycloak.auth.adminUser }}" \
+                    -d "password={{ .Values.keycloak.auth.adminPassword }}" \
+                    -d "grant_type=password" | jq -r .access_token)" \
+                    -o /backup/keycloak.json
+                  {{- end }}
+                  # Backup Kong
+                  {{- if .Values.kong.enabled }}
+                  curl -X GET "http://{{ .Release.Name }}-kong:8001/config" \
+                    -o /backup/kong.json
+                  {{- end }}
+                  # Upload to storage
+                  {{- if .Values.backup.storage.type }}
+                  {{- if eq .Values.backup.storage.type "s3" }}
+                  aws s3 cp /backup/ s3://{{ .Values.backup.storage.bucket }}/{{ .Release.Name }}/ --recursive
+                  {{- else if eq .Values.backup.storage.type "gcs" }}
+                  gsutil cp /backup/ gs://{{ .Values.backup.storage.bucket }}/{{ .Release.Name }}/ --recursive
+                  {{- end }}
+                  {{- end }}
+              env:
+                {{- if .Values.backup.storage.type }}
+                {{- if eq .Values.backup.storage.type "s3" }}
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.storage.secretName }}
+                      key: accessKey
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.storage.secretName }}
+                      key: secretKey
+                - name: AWS_DEFAULT_REGION
+                  value: {{ .Values.backup.storage.region }}
+                {{- else if eq .Values.backup.storage.type "gcs" }}
+                - name: GOOGLE_APPLICATION_CREDENTIALS
+                  value: /secrets/gcp-credentials.json
+                {{- end }}
+                {{- end }}
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                {{- if eq .Values.backup.storage.type "gcs" }}
+                - name: gcp-credentials
+                  mountPath: /secrets
+                {{- end }}
+          volumes:
+            - name: backup
+              emptyDir: {}
+            {{- if eq .Values.backup.storage.type "gcs" }}
+            - name: gcp-credentials
+              secret:
+                secretName: {{ .Values.backup.storage.secretName }}
+            {{- end }}
+          restartPolicy: OnFailure
+{{- end }} 

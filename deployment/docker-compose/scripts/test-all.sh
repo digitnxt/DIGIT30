@@ -10,6 +10,7 @@ SERVICES=(
   kong-synch
   keycloak
   redis
+  model-context-service
 )
 
 echo "Checking status of Docker Compose services under project: $PROJECT_NAME"

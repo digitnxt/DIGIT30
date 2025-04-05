@@ -1,0 +1,104 @@
+{{- if .Values.infrastructureServices.kafka.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-kafka
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "digitnxt.fullname" . }}-kafka
+  replicas: {{ .Values.infrastructureServices.kafka.replicas }}
+  selector:
+    matchLabels:
+      {{- include "digitnxt.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kafka
+  template:
+    metadata:
+      labels:
+        {{- include "digitnxt.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kafka
+    spec:
+      serviceAccountName: {{ include "digitnxt.serviceAccountName" . }}
+      containers:
+        - name: kafka
+          image: "{{ .Values.infrastructureServices.kafka.image.repository }}:{{ .Values.infrastructureServices.kafka.image.tag }}"
+          imagePullPolicy: {{ .Values.infrastructureServices.kafka.image.pullPolicy }}
+          ports:
+            - name: kafka
+              containerPort: {{ .Values.infrastructureServices.kafka.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.infrastructureServices.kafka.resources | nindent 12 }}
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server=localhost:{{ .Values.infrastructureServices.kafka.service.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server=localhost:{{ .Values.infrastructureServices.kafka.service.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: KAFKA_BROKER_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: {{ include "digitnxt.fullname" . }}-zookeeper:{{ .Values.infrastructureServices.zookeeper.service.port }}
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: PLAINTEXT://$(POD_IP):{{ .Values.infrastructureServices.kafka.service.port }}
+            - name: KAFKA_LISTENERS
+              value: PLAINTEXT://:{{ .Values.infrastructureServices.kafka.service.port }}
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+              value: "1"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka
+              subPath: kafka
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "digitnxt.pvcName" . }}-kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "digitnxt.fullname" . }}-kafka
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.infrastructureServices.kafka.service.type }}
+  ports:
+    - port: {{ .Values.infrastructureServices.kafka.service.port }}
+      targetPort: kafka
+      protocol: TCP
+      name: kafka
+  selector:
+    {{- include "digitnxt.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "digitnxt.pvcName" . }}-kafka
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.infrastructureServices.kafka.persistence.size }}
+  storageClassName: {{ .Values.global.storageClass }}
+{{- end }} 

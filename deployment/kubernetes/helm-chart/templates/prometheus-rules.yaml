@@ -1,0 +1,23 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "digitnxt.fullname" . }}
+  labels:
+    {{- include "digitnxt.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: {{ include "digitnxt.fullname" . }}
+      rules:
+        {{- range .Values.monitoring.rules }}
+        - alert: {{ .alert }}
+          expr: {{ .expr | quote }}
+          {{- if .for }}
+          for: {{ .for }}
+          {{- end }}
+          labels:
+            {{- toYaml .labels | nindent 12 }}
+          annotations:
+            {{- toYaml .annotations | nindent 12 }}
+        {{- end }}
+{{- end }} 

@@ -73,6 +73,12 @@ The platform consists of multiple containerized services managed through Docker 
 - Sample service built with Go and Gin
 - Demonstrates tracing, metrics, and service registration with Consul and Jaeger
 
+### Model Context Service
+- Exposes Swagger documentation in a format suitable for LLM consumption
+- Provides structured API context for AI-powered tools and integrations
+- Accessible at http://localhost:8085/context/identity for identity service context
+- Supports multiple services with extensible context format
+
 ## APIs
 
 DIGIT 3.0 exposes several APIs for internal and external use:
