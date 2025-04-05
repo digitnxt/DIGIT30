@@ -15,9 +15,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "identity/docs" // This is important! It imports the generated docs
 	"identity/internal/discovery"
 	"identity/internal/docs"
+	_ "identity/internal/docs" // This is important! It imports the generated docs
 	"identity/internal/observability"
 )
 
